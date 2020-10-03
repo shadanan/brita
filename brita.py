@@ -53,37 +53,50 @@ f"""
 - **{estimated_days_remaining:.0f}** days remaining before needing to replace the filter
 """
 
+base_refills = alt.Chart(refills_df.reset_index())
+
+filter_selection = alt.selection_multi(fields=["filter"], bind="legend")
+
 refills = (
-    alt.Chart(refills_df.reset_index(), title="Total Refills")
+    base_refills.properties(title="Total Refills")
     .mark_line()
     .encode(
         x=alt.X("yearmonthdate(timestamp)", type="temporal", title="Date"),
         y=alt.Y("max(total_refills)", type="quantitative", title="Refills"),
-        color=alt.Color("filter", type="nominal"),
+        color=alt.Color("filter", type="nominal", title="Filter"),
+        opacity=alt.condition(filter_selection, alt.value(1), alt.value(0.2)),
     )
+)
+
+expected_refills = (
+    alt.Chart(pd.DataFrame({"mean_refills_per_filter": [mean_refills_per_filter]}))
+    .mark_rule()
+    .encode(y="mean_refills_per_filter")
 )
 
 replacements = (
     alt.Chart(replacements_df.reset_index())
-    .mark_rule(color="red")
+    .mark_rule()
     .encode(
         x=alt.X("yearmonthdate(timestamp)", type="temporal"),
         color=alt.Color("filter", type="nominal"),
+        opacity=alt.condition(filter_selection, alt.value(1), alt.value(0.2)),
     )
 )
 
 st.altair_chart(
-    (refills + replacements),
+    (refills + replacements + expected_refills).add_selection(filter_selection),
     use_container_width=True,
 )
 
+
 st.altair_chart(
-    alt.Chart(refills_df.reset_index(), title="Refills by Hour of the Day")
+    base_refills.properties(title="Refills by Hour of the Day")
     .mark_bar()
     .encode(
         x=alt.X("hours(timestamp)", type="temporal", title="Hour"),
         y=alt.Y("sum(refills)", title="Refills"),
-        color=alt.Color("day(timestamp)", type="temporal", title="Day"),
+        color=alt.Color("day(timestamp)", type="nominal", title="Day"),
         tooltip=[
             alt.Tooltip("hours(timestamp)", title="Hour of the Day"),
             alt.Tooltip("day(timestamp)", title="Day of the Week"),
@@ -93,8 +106,9 @@ st.altair_chart(
     use_container_width=True,
 )
 
+
 st.altair_chart(
-    alt.Chart(refills_df.reset_index(), title="Refills by Month of the Year")
+    base_refills.properties(title="Refills by Month of the Year")
     .mark_bar()
     .encode(
         x=alt.X("yearmonth(timestamp)", type="temporal", title="Month"),
@@ -103,6 +117,23 @@ st.altair_chart(
         tooltip=[
             alt.Tooltip("yearmonth(timestamp)", title="Month"),
             alt.Tooltip("hours(timestamp)", title="Hour of the Day"),
+            alt.Tooltip("sum(refills)", title="Refills"),
+        ],
+    ),
+    use_container_width=True,
+)
+
+
+st.altair_chart(
+    base_refills.properties(title="Refills by Day of the Week")
+    .mark_bar()
+    .encode(
+        x=alt.X("day(timestamp)", type="ordinal", title="Day"),
+        y=alt.Y("sum(refills)", title="Refills"),
+        color=alt.Color("filter", type="nominal", title="Filter"),
+        tooltip=[
+            alt.Tooltip("day(timestamp)", title="Day of the Week"),
+            alt.Tooltip("filter", title="Filter"),
             alt.Tooltip("sum(refills)", title="Refills"),
         ],
     ),
