@@ -1,0 +1,5 @@
+# Virtual environment
+.venv
+
+# Google API credential
+shad-jupyter.json
