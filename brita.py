@@ -6,7 +6,7 @@ import streamlit as st
 from oauth2client.service_account import ServiceAccountCredentials
 
 
-@st.cache(ttl=3600)
+@st.cache(ttl=60)
 def brita_log():
     scope = [
         "https://spreadsheets.google.com/feeds",
