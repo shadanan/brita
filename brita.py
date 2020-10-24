@@ -41,6 +41,7 @@ recent_refilled = max(refills_df.index)
 recent_replaced = max(replacements_df.index)
 mean_refills_per_filter = refills_df.groupby("filter")["refills"].sum()[:-1].mean()
 mean_refills_per_day = refills_df.groupby(pd.Grouper(freq="D"))["refills"].sum().mean()
+mean_days_per_filter = mean_refills_per_filter / mean_refills_per_day
 refills_this_iteration = refills_df["total_refills"][-1]
 estimated_days_remaining = (
     mean_refills_per_filter - refills_this_iteration
@@ -48,13 +49,10 @@ estimated_days_remaining = (
 
 f"""
 # Brita Water Log
-- Brita pitcher last refilled **{humanize.naturaltime(recent_refilled, when=now)}**
-- Brita filter last replaced **{humanize.naturaltime(recent_replaced, when=now)}**
-- **{len(replacements_df)}** total Brita filters used
-- Average of **{mean_refills_per_filter:.1f}** refills per Brita filter
-- Average of **{mean_refills_per_day:.1f}** refills per day
-- **{refills_this_iteration}** refills used on the current Brita filter
-- **{estimated_days_remaining:.0f}** days remaining before needing to replace the filter
+- Brita pitcher last refilled **{humanize.naturaltime(recent_refilled, when=now)}** with an average of **{mean_refills_per_day:.1f}** refills per day
+- **{len(replacements_df)}** total Brita filters used and was most recently replaced **{humanize.naturaltime(recent_replaced, when=now)}**
+- **{refills_this_iteration}** / **{mean_refills_per_filter:.1f}** refills used on the current Brita filter
+- **{estimated_days_remaining:.0f}** / **{mean_days_per_filter:.1f}** days remaining before needing to replace the filter
 """
 
 base_refills = alt.Chart(refills_df.reset_index())
