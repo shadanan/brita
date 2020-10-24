@@ -2,4 +2,5 @@ black
 gspread
 humanize
 oauth2client
+pytz
 streamlit

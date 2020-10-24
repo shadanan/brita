@@ -1,3 +1,5 @@
+from datetime import datetime
+import pytz
 import altair as alt
 import humanize
 import gspread
@@ -19,7 +21,8 @@ def brita_log():
 
     df = pd.DataFrame.from_dict(records)
     df = df.rename({"Timestamp": "timestamp", "Event Name": "event"}, axis=1)
-    df["timestamp"] = pd.to_datetime(df["timestamp"], format="%d/%m/%Y %H:%M:%S")
+    df["timestamp"] = pd.to_datetime(df["timestamp"], format=r"%d/%m/%Y %H:%M:%S")
+    df["timestamp"] = df["timestamp"].dt.tz_localize("US/Pacific")
     df = df.set_index("timestamp").sort_index()
 
     df["refills"] = 1
@@ -28,6 +31,7 @@ def brita_log():
     return df
 
 
+now = datetime.now(tz=pytz.timezone("US/Pacific"))
 df = brita_log()
 
 refills_df = df[df.event == "Brita pitcher refilled"]
@@ -44,8 +48,8 @@ estimated_days_remaining = (
 
 f"""
 # Brita Water Log
-- Brita pitcher last refilled **{humanize.naturaltime(recent_refilled)}**
-- Brita filter last replaced **{humanize.naturaltime(recent_replaced)}**
+- Brita pitcher last refilled **{humanize.naturaltime(recent_refilled, when=now)}**
+- Brita filter last replaced **{humanize.naturaltime(recent_replaced, when=now)}**
 - **{len(replacements_df)}** total Brita filters used
 - Average of **{mean_refills_per_filter:.1f}** refills per Brita filter
 - Average of **{mean_refills_per_day:.1f}** refills per day
